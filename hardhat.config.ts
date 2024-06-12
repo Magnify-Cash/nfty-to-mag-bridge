@@ -41,16 +41,11 @@ import "solidity-docgen"; // The tool by OpenZeppelin to generate documentation 
  * Setting in `.env` file.
  */
 // prettier-ignore
-const ETHEREUM_MAINNET_KEYS: string[] = process.env.ETHEREUM_MAINNET_KEYS ?
-    process.env.ETHEREUM_MAINNET_KEYS.split(",") : [];
-// prettier-ignore
-const ETHEREUM_TESTNET_KEYS: string[] = process.env.ETHEREUM_TESTNET_KEYS ?
-    process.env.ETHEREUM_TESTNET_KEYS.split(",") : [];
-// See `config.networks`.
-// const POLYGON_MAINNET_KEYS: string[] = process.env.POLYGON_MAINNET_KEYS ?
-//     process.env.POLYGON_MAINNET_KEYS.split(",") : [];
-// const POLYGON_TESTNET_KEYS: string[] = process.env.POLYGON_TESTNET_KEYS ?
-//     process.env.POLYGON_TESTNET_KEYS.split(",") : [];
+const PRIVATE_KEY=process.env.PRIVATE_KEY || ""
+const SEPOLIA_URL = process.env.SEPOLIA_URL || "";
+const AMOY_URL = process.env.AMOY_URL || "";
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || "";
 
 /*
  * The solc compiler optimizer configuration. (The optimizer is disabled by default).
@@ -75,7 +70,16 @@ const config: HardhatUserConfig = {
                         runs: OPTIMIZER_RUNS
                     }
                 }
-            } //,
+            },
+            {
+                version: "0.8.26",
+                settings: {
+                    optimizer: {
+                        enabled: ENABLED_OPTIMIZER,
+                        runs: OPTIMIZER_RUNS
+                    }
+                }
+            }
             // { // Example of adding of multiple compiler versions within the same project.
             //     version: "0.7.6",
             //     settings: {
@@ -106,7 +110,7 @@ const config: HardhatUserConfig = {
             forking: {
                 url: process.env.FORKING_URL || "",
                 enabled: process.env.FORKING !== undefined
-            }//,
+            } //,
             /*
              * Uncomment the line below if Ethers reports the error
              * "Error: cannot estimate gas; transaction may fail or may require manual gas limit...".
@@ -116,46 +120,15 @@ const config: HardhatUserConfig = {
         },
         // Ethereum.
         // Rest parameter (...) to treat it as a single array (added in ES6)
-        mainnet: {
-            url: process.env.ETHEREUM_URL || "",
-            accounts: [...ETHEREUM_MAINNET_KEYS]
-        },
-        goerli: {
-            url: process.env.GOERLI_URL || "",
-            accounts: [...ETHEREUM_TESTNET_KEYS]
-        },
+
         sepolia: {
-            url: process.env.SEPOLIA_URL || "",
-            accounts: [...ETHEREUM_TESTNET_KEYS]
+            url: SEPOLIA_URL,
+            accounts: [PRIVATE_KEY]
         },
-        // BSC.
-        bsc: {
-            url: process.env.BSC_MAINNET_URL || "",
-            accounts: [...ETHEREUM_MAINNET_KEYS]
-        },
-        bsc_testnet: {
-            url: process.env.BSC_TESTNET_URL || "",
-            accounts: [...ETHEREUM_TESTNET_KEYS]
-        },
-        loop: {
-            url: process.env.LOOP_MAINNET_URL || "",
-            accounts: [...ETHEREUM_MAINNET_KEYS]
-        },
-        loop_testnet: {
-            url: process.env.LOOP_TESTNET_URL || "",
-            accounts: [...ETHEREUM_MAINNET_KEYS]
+        polygonAmoy: {
+            url: AMOY_URL,
+            accounts: [PRIVATE_KEY]
         }
-        //,
-        // // Polygon.
-        // // Example of adding of other networks.
-        // polygon: {
-        //     url: process.env.POLYGON_URL || "",
-        //     accounts: [...POLYGON_MAINNET_KEYS]
-        // },
-        // mumbai: {
-        //     url:  process.env.MUMBAI_URL || "",
-        //     accounts: [...POLYGON_TESTNET_KEYS]
-        // }
     },
     contractSizer: {
         except: ["mocks/", "from-dependencies/"]
@@ -191,34 +164,27 @@ const config: HardhatUserConfig = {
          * https://hardhat.org/hardhat-runner/plugins/nomiclabs-hardhat-etherscan#multiple-api-keys-and-alternative-block-explorers.
          */
         apiKey: {
-            mainnet: process.env.ETHERSCAN_API_KEY || "",
-            goerli: process.env.ETHERSCAN_API_KEY || "",
-            sepolia: process.env.ETHERSCAN_API_KEY || "",
-            bscTestnet: process.env.BSC_SCAN_API_KEY || "",
-            loop: process.env.ETHERSCAN_API_KEY || "",
-            bsc: process.env.ETHERSCAN_API_KEY || "",
-            loop_testnet: process.env.ETHERSCAN_API_KEY || ""
-        //     polygon: "POLYGONSCAN_API_KEY",
-        //     polygonMumbai: "POLYGONSCAN_API_KEY"
+            sepolia: ETHERSCAN_API_KEY,
+            polygonAmoy: POLYGONSCAN_API_KEY
         },
         customChains: [
-            {
-              network: "loop",
-              chainId: 15551,
-              urls: {
-                apiURL: process.env.LOOP_MAINNET_URL || "",
-                browserURL: process.env.LOOP_MAINNET_EXPLORER_URL || ""
-              }
-            },
-            {
-              network: "loop_testnet",
-              chainId: 12345,
-              urls: {
-                apiURL: process.env.LOOP_TESTNET_URL || "",
-                browserURL: process.env.LOOP_TESTNET_EXPLORER_URL || ""
-              }
-            }
-          ]
+            // {
+            //     network: "amoy",
+            //     chainId: 80002,
+            //     urls: {
+            //         apiURL: AMOY_URL,
+            //         browserURL: "https://amoy.polygonscan.com/" || ""
+            //     }
+            // },
+            // {
+            //     network: "loop_testnet",
+            //     chainId: 12345,
+            //     urls: {
+            //         apiURL: process.env.LOOP_TESTNET_URL || "",
+            //         browserURL: process.env.LOOP_TESTNET_EXPLORER_URL || ""
+            //     }
+            // }
+        ]
     },
     abiExporter: {
         pretty: true,
@@ -234,7 +200,7 @@ const config: HardhatUserConfig = {
             // "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol",
             // "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol"
         ],
-        path: "./from-dependencies"//,
+        path: "./from-dependencies" //,
         /*
          * Required for Slither if something in `paths`. It is to keep temporary file directory after compilation is
          * complete.
