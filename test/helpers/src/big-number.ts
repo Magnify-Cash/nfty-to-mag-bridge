@@ -1,9 +1,10 @@
-import type { BigNumber, BigNumberish } from "ethers";
-import { parseUnits } from "ethers/lib/utils";
+import type { BigNumberish } from "ethers";
 import { ethers } from "hardhat";
 
+const parseUnits = ethers.parseUnits;
+
 function ntos(num: BigNumberish): string {
-    return typeof(num) === "string" ? num : num.toString();
+    return typeof num === "string" ? num : num.toString();
 }
 
 /*
@@ -17,22 +18,20 @@ function ntos(num: BigNumberish): string {
  *     decimalsOrUnitName Number of decimals (e.g., 18, 9) or name of an ethereum unit (e.g., "ether", "gwei").
  */
 const units = {
-        wei:    (val: BigNumberish): BigNumber => parseUnits(ntos(val), "wei"),
-        kwei:   (val: BigNumberish): BigNumber => parseUnits(ntos(val), "kwei"),
-        mwei:   (val: BigNumberish): BigNumber => parseUnits(ntos(val), "mwei"),
-        gwei:   (val: BigNumberish): BigNumber => parseUnits(ntos(val), "gwei"),
-        szabo:  (val: BigNumberish): BigNumber => parseUnits(ntos(val), "szabo"),
-        finney: (val: BigNumberish): BigNumber => parseUnits(ntos(val), "finney"),
-        ether:  (val: BigNumberish): BigNumber => parseUnits(ntos(val), "ether"),
-        decimals: (val: BigNumberish, decimalsOrUnitName?: BigNumberish): BigNumber =>
-            parseUnits(ntos(val), decimalsOrUnitName)
-    };
+    wei: (val: BigNumberish): bigint => parseUnits(ntos(val), "wei"),
+    kwei: (val: BigNumberish): bigint => parseUnits(ntos(val), "kwei"),
+    mwei: (val: BigNumberish): bigint => parseUnits(ntos(val), "mwei"),
+    gwei: (val: BigNumberish): bigint => parseUnits(ntos(val), "gwei"),
+    szabo: (val: BigNumberish): bigint => parseUnits(ntos(val), "szabo"),
+    finney: (val: BigNumberish): bigint => parseUnits(ntos(val), "finney"),
+    ether: (val: BigNumberish): bigint => parseUnits(ntos(val), "ether"),
+    decimals: (val: BigNumberish, decimalsOrUnitName?: BigNumberish): bigint =>
+        parseUnits(ntos(val), decimalsOrUnitName)
+};
 
-// Aliases.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const toBN = (value: any) => ethers.BigNumber.from(value);
+// _______________ Aliases _______________
 
-// It is equal to ethers.utils.parseUnits(), but extended for different number types.W
+// It is equal to ethers.parseUnits(), but extended for different number types.
 const addDecimals = units.decimals;
 
-export { units, toBN, addDecimals };
+export { units, addDecimals };
