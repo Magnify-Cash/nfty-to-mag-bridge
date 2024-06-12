@@ -13,36 +13,16 @@
             "SPHYNX": "0x6bB6B8b1C4ec10E138Cf2eE5880Be59044dbCAcf"
         }
     },
-    "bsc_testnet": {
-        "old": {},
-        "new": {
-            "MNT": "0xA506Da5F0a1Da881ace15f1BEC28C069f56249D5",
-            "WETH": "0x23E7B259EF5A73EfC5D064Dfdba6c9FF52fC0e45",
-            "Bridge": "0x7FA6d700E917F013fb26de4eA79dE87eEb9701C2"
-        }
-    },
     "sepolia": {
         "old": {},
         "new": {
-            "Bridge": "0x7F599AA24496154506e8575b36cFb472CE842a18"
+            "Bridge": "0xc097dec7C6a0AeC40869c47cb97fe3C8D9BCFC00"
         }
     },
-    "loop": {
+    "polygonAmoy": {
         "old": {},
         "new": {
-            "Bridge": "0xc91e7bCF649ba2c33d50ff11a9c0f137A49D7436"
-        }
-    },
-    "bsc": {
-        "old": {},
-        "new": {
-            "Bridge": "0xa2B4D9B122bE246A6a0a1f996EFe11fC53a8F60D"
-        }
-    },
-    "loop_testnet": {
-        "old": {},
-        "new": {
-            "Bridge": "0xbC718a5F6327b11Bc3965327cE9F5fc94555450f"
+            "Bridge": "0x2De9Fe06F63EE70Fd6954519378053f610B8B726"
         }
     }
 }
