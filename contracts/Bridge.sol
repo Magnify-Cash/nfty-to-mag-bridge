@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -14,15 +14,17 @@ error NonceIsUsed(uint256 nonce);
 error NonceIsRefunded(uint256 nonce);
 error TokenIsNotSupported(address token);
 error RefundIsBlocked(uint256 nonce);
-error MinTimeToRefundIsNotReached(uint256 minTimeToRefund, uint256 creationTime); 
+error MinTimeToRefundIsNotReached(uint256 minTimeToRefund, uint256 creationTime);
 error OnlyRelayerOrCreatorCanRefund(uint256 nonce);
 error MsgValueShouldBeZero();
 error FailedToSendEther();
 error MinTimeToWaitBeforeRefundIsTooBig(uint256 minTimeToWaitBeforeRefund);
+error InsuffisientAmountToSend();
+error NotWhitelisted(address caller);
 
 contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    struct NonceInfo{
+    struct NonceInfo {
         address token;
         address creator;
         address to;
@@ -41,7 +43,7 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
 
     /// @notice Mapping of supported tokens (token => isSupported)
     mapping(address => bool) public tokenIsSupported;
-    /// @notice Mapping of all added addresses in whitelist 
+    /// @notice Mapping of all added addresses in whitelist
     address[] public allWhitelistedTokens;
     /// @notice Mapping of minimum amount for tokens (token => minAmount)
     mapping(address => uint256) public minAmountForToken;
@@ -52,16 +54,31 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
     /// @notice Mapping of used nonces (nonce => isUsed)
     mapping(uint256 => bool) public nonceIsUsed;
     /// @notice Mapping of nonce info (nonce => NonceInfo)
-    mapping (uint256 => NonceInfo) public nonceInfo;
+    mapping(uint256 => NonceInfo) public nonceInfo;
     /// @notice Mapping of blocked nonces for refund (nonce => isBlocked)
-    mapping (uint256 => bool) public nonceIsBlockedForRefund;
+    mapping(uint256 => bool) public nonceIsBlockedForRefund;
     /// @notice Mapping of used nonces for refund (nonce => isRefunded)
-    mapping (uint256 => bool) public nonceIsRefunded;
+    mapping(uint256 => bool) public nonceIsRefunded;
+
+    mapping(address => uint256) public allocations;
+    mapping(address => bool) public isWhitelisted;
 
     event Refund(address indexed token, address indexed to, uint256 amount, uint256 nonce);
     event BlockRefund(uint256 nonce);
-    event Send(address indexed token, address indexed tokenOnSecondChain, address indexed to, uint256 amount, uint256 nonce);
-    event Withdraw(address indexed token, address indexed tokenOnSecondChain, address indexed to, uint256 amount, uint256 nonce);
+    event Send(
+        address indexed token,
+        address indexed tokenOnSecondChain,
+        address indexed to,
+        uint256 amount,
+        uint256 nonce
+    );
+    event Withdraw(
+        address indexed token,
+        address indexed tokenOnSecondChain,
+        address indexed to,
+        uint256 amount,
+        uint256 nonce
+    );
     event AddToken(address indexed token, address indexed tokenOnSecondChain, uint256 minAmount);
     event RemoveToken(address indexed token);
     event NewWrappedNative(address indexed oldWrappedNative, address indexed newWrappedNative);
@@ -76,6 +93,18 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         if (!tokenIsSupported[token]) {
             revert TokenIsNotSupported(token);
         }
+        _;
+    }
+
+    modifier onlyWhitelisted(address caller, uint256 amount) {
+        if (!isWhitelisted[caller]) {
+            revert NotWhitelisted(caller);
+        }
+
+        if (amount > allocations[caller]) {
+            revert InsuffisientAmountToSend();
+        }
+
         _;
     }
 
@@ -111,23 +140,16 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
     /// @dev the function can be called only for a supported token and only emits a specific event for the backend to listen to
     /// @param token Address of the token
     /// @param to Address of the receiver on the second chain
-    /// @param amount Amount of tokens to send 
-    function send(
-        address token,
-        address to,
-        uint256 amount
-    ) external payable whenNotPaused onlySupportedToken(token) {
-        if(amount >= minAmountForToken[token]) {
-            if(token == wrappedNative) {
-                if(msg.value == amount){
+    /// @param amount Amount of tokens to send
+    function send(address token, address to, uint256 amount) external payable whenNotPaused onlySupportedToken(token) {
+        if (amount >= minAmountForToken[token]) {
+            if (token == wrappedNative) {
+                if (msg.value == amount) {
                     nonceInfo[nonce] = NonceInfo(token, msg.sender, to, amount, block.timestamp);
                     emit Send(token, otherChainToken[token], to, amount, nonce++);
-                    }
-                else
-                    revert AmountIsNotEqualToMsgValue(amount, msg.value);
+                } else revert AmountIsNotEqualToMsgValue(amount, msg.value);
             } else {
-                if(msg.value > 0)
-                    revert MsgValueShouldBeZero();
+                if (msg.value > 0) revert MsgValueShouldBeZero();
                 IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
                 nonceInfo[nonce] = NonceInfo(token, msg.sender, to, amount, block.timestamp);
                 emit Send(token, otherChainToken[token], to, amount, nonce++);
@@ -141,10 +163,8 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
     /// @dev the function can be called only by a relayer and should be called before withdrawing on the second chain
     /// @param nonceToBlock Nonce to block
     function blockRefund(uint256 nonceToBlock) external onlyRole(RELAYER_ROLE) {
-        if (nonceIsBlockedForRefund[nonceToBlock])
-            revert RefundIsBlocked(nonceToBlock);
-        if (nonceIsRefunded[nonceToBlock])
-            revert NonceIsRefunded(nonceToBlock);
+        if (nonceIsBlockedForRefund[nonceToBlock]) revert RefundIsBlocked(nonceToBlock);
+        if (nonceIsRefunded[nonceToBlock]) revert NonceIsRefunded(nonceToBlock);
         nonceIsBlockedForRefund[nonceToBlock] = true;
         emit BlockRefund(nonceToBlock);
     }
@@ -170,7 +190,7 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
                     block.timestamp
                 );
 
-            if (msg.sender != nonceInfoToRefund.creator && !hasRole(RELAYER_ROLE, msg.sender)){
+            if (msg.sender != nonceInfoToRefund.creator && !hasRole(RELAYER_ROLE, msg.sender)) {
                 revert OnlyRelayerOrCreatorCanRefund(nonceToRefund);
             }
         }
@@ -179,21 +199,16 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
             nonceIsRefunded[nonceToRefund] = true;
         }
         /// Refund functionality.
-        if (nonceInfoToRefund.token == wrappedNative){
+        if (nonceInfoToRefund.token == wrappedNative) {
             (bool sent, ) = payable(nonceInfoToRefund.creator).call{value: nonceInfoToRefund.amount}("");
-            if (!sent)
-                revert FailedToSendEther();
-        }
-        else
+            if (!sent) revert FailedToSendEther();
+        } else
             IERC20Upgradeable(nonceInfoToRefund.token).safeTransfer(
-                nonceInfoToRefund.creator, nonceInfoToRefund.amount);
+                nonceInfoToRefund.creator,
+                nonceInfoToRefund.amount
+            );
 
-        emit Refund(
-            nonceInfoToRefund.token, 
-            nonceInfoToRefund.to, 
-            nonceInfoToRefund.amount, 
-            nonceToRefund
-        );
+        emit Refund(nonceInfoToRefund.token, nonceInfoToRefund.to, nonceInfoToRefund.amount, nonceToRefund);
     }
 
     /// @notice function to withdraw tokens from the second chain
@@ -208,13 +223,12 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         uint256 amount,
         uint256 nonceOnOtherChain
     ) external whenNotPaused onlyRole(RELAYER_ROLE) onlySupportedToken(token) {
-        if(!nonceIsUsed[nonceOnOtherChain]) {
+        if (!nonceIsUsed[nonceOnOtherChain]) {
             nonceIsUsed[nonceOnOtherChain] = true;
             emit Withdraw(token, otherChainToken[token], to, amount, nonceOnOtherChain);
-            if(token == wrappedNative) {
-                (bool sent,) = payable(to).call{value: amount}("");
-                if(!sent)
-                    revert FailedToSendEther();
+            if (token == wrappedNative) {
+                (bool sent, ) = payable(to).call{value: amount}("");
+                if (!sent) revert FailedToSendEther();
             } else {
                 IERC20Upgradeable(token).safeTransfer(to, amount);
             }
@@ -233,13 +247,10 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         address to,
         uint256 amount
     ) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(token == wrappedNative){
-            (bool sent,) = payable(to).call{value: amount}("");
-            if(!sent)
-                revert FailedToSendEther();
-        }
-        else
-            IERC20Upgradeable(token).safeTransfer(to, amount);
+        if (token == wrappedNative) {
+            (bool sent, ) = payable(to).call{value: amount}("");
+            if (!sent) revert FailedToSendEther();
+        } else IERC20Upgradeable(token).safeTransfer(to, amount);
         emit EmergencyWithdraw(token, to, amount);
     }
 
@@ -256,13 +267,12 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         allWhitelistedTokens.push(token);
         minAmountForToken[token] = minAmount;
         otherChainToken[token] = tokenOnSecondChain;
-        emit AddToken(token, tokenOnSecondChain, minAmount); 
+        emit AddToken(token, tokenOnSecondChain, minAmount);
     }
 
     /// @notice function to remove a token from the bridge
     /// @param token Address of the token
-    function removeToken(address token) public 
-    onlyRole(DEFAULT_ADMIN_ROLE) onlySupportedToken(token){
+    function removeToken(address token) public onlyRole(DEFAULT_ADMIN_ROLE) onlySupportedToken(token) {
         tokenIsSupported[token] = false;
         for (uint256 i = 0; i < allWhitelistedTokens.length; i++) {
             if (allWhitelistedTokens[i] == token) {
@@ -298,7 +308,7 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         }
         minTimeToWaitBeforeRefund = _minTimeToWaitBeforeRefund;
         emit NewMinTimeToWaitBeforeRefund(_minTimeToWaitBeforeRefund);
-    } 
+    }
 
     /// @notice function to pause the bridge
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -316,29 +326,24 @@ contract Bridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeabl
         address _oldOtherChainWrappedNative = otherChainToken[wrappedNative];
         uint256 _oldMinAmountForWrappedNative = minAmountForToken[wrappedNative];
         removeToken(wrappedNative);
-        addToken(
-            _wrappedNative, 
-            _oldOtherChainWrappedNative, 
-            _oldMinAmountForWrappedNative
-        );
+        addToken(_wrappedNative, _oldOtherChainWrappedNative, _oldMinAmountForWrappedNative);
         emit NewWrappedNative(wrappedNative, _wrappedNative);
         wrappedNative = _wrappedNative;
     }
 
     /// @notice function to get the length of all whitelisted tokens
     /// @return Length of all whitelisted tokens
-    function allWhitelistedTokensLength() external view returns(uint256) {
+    function allWhitelistedTokensLength() external view returns (uint256) {
         return allWhitelistedTokens.length;
     }
 
     /// @notice function to get all whitelisted tokens
     /// @return Array of all whitelisted tokens
-    function getAllWhitelistedTokens() external view returns(address[] memory) {
+    function getAllWhitelistedTokens() external view returns (address[] memory) {
         return allWhitelistedTokens;
-    } 
+    }
 
     /// @notice function to ensure that only admin can upgrade the contract
-    /// @param newImplementation Address of the new implementation 
+    /// @param newImplementation Address of the new implementation
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 }
-
