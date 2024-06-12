@@ -1,0 +1,48 @@
+{
+    "homestead": {
+        "old": {},
+        "new": {
+            "MNT": "0x16477DA321C12De45D0bD9CCceAB979f4127ba4F",
+            "WETH": "0xcF7651e0825609E446e6f43456709991323240e3",
+            "Bridge": "0x5890C624d04677379ba9a9b78c7Af50e4c7df6E2",
+            "LOOP": "0x33cA0D2ac807BD6C7D8A79a8EF7d14B6f7d16DD0",
+            "WBSC": "0x3114320515c6d23e1D0410437BE3ae8E8f9c564e",
+            "WLOOP": "0x145a5e49aDB20394f91622d7cc0CA2Cc05B03A07",
+            "WPOOL": "0x8f8B7C2C3E3D267D7210f85c6E4d9512f1d6Aac6",
+            "WBNB": "0x145a5e49aDB20394f91622d7cc0CA2Cc05B03A07",
+            "SPHYNX": "0x6bB6B8b1C4ec10E138Cf2eE5880Be59044dbCAcf"
+        }
+    },
+    "bsc_testnet": {
+        "old": {},
+        "new": {
+            "MNT": "0xA506Da5F0a1Da881ace15f1BEC28C069f56249D5",
+            "WETH": "0x23E7B259EF5A73EfC5D064Dfdba6c9FF52fC0e45",
+            "Bridge": "0x7FA6d700E917F013fb26de4eA79dE87eEb9701C2"
+        }
+    },
+    "sepolia": {
+        "old": {},
+        "new": {
+            "Bridge": "0x7F599AA24496154506e8575b36cFb472CE842a18"
+        }
+    },
+    "loop": {
+        "old": {},
+        "new": {
+            "Bridge": "0xc91e7bCF649ba2c33d50ff11a9c0f137A49D7436"
+        }
+    },
+    "bsc": {
+        "old": {},
+        "new": {
+            "Bridge": "0xa2B4D9B122bE246A6a0a1f996EFe11fC53a8F60D"
+        }
+    },
+    "loop_testnet": {
+        "old": {},
+        "new": {
+            "Bridge": "0xbC718a5F6327b11Bc3965327cE9F5fc94555450f"
+        }
+    }
+}
