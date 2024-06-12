@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -11,11 +11,7 @@ contract MockToken is ERC20, AccessControl {
         _;
     }
 
-    constructor(
-        string memory name,
-        string memory symbols,
-        uint8 decimalsNumber
-    ) ERC20(name, symbols) {
+    constructor(string memory name, string memory symbols, uint8 decimalsNumber) ERC20(name, symbols) {
         _decimals = decimalsNumber;
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
