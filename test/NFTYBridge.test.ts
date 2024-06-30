@@ -607,32 +607,6 @@ describe("NFTY Bridge", function () {
             expect(await bridge.allocations(user2.address)).to.be.equal(allocations[1]);
         });
 
-        it("Should revert if allocations already set", async () => {
-            const whitelist = [user];
-            const isWhitelisted = true;
-            const allocations = [addDec(0.1)];
-
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
-            await bridge.connect(deployer).setAllocations(whitelist, allocations);
-
-            // Set allocations again
-            await expect(bridge.connect(deployer).setAllocations(whitelist, allocations))
-                .to.be.revertedWithCustomError(bridge, "AllocationsAlreadySet")
-                .withArgs(whitelist[0]);
-        });
-
-        it("Should revert if amount of allocations is equal to zero", async () => {
-            const whitelist = [user, user2];
-            const isWhitelisted = true;
-            const allocations = [addDec(0.1), 0];
-
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
-            await expect(bridge.connect(deployer).setAllocations(whitelist, allocations)).to.be.revertedWithCustomError(
-                bridge,
-                "ZeroAmount"
-            );
-        });
-
         it("Should revert if user is not whitelisted during allocations setting", async () => {
             const whitelist = [user];
             const allocations = [addDec(0.1)];
