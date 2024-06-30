@@ -354,6 +354,9 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         emit NewMinTimeToWaitBeforeRefund(_minTimeToWaitBeforeRefund);
     }
 
+    /// @notice function to add or remove addresses from the whitelist
+    /// @param _accounts Addresses to add or remove from the whitelist
+    /// @param _isWhitelisted Whether to add or remove the addresses from the whitelist
     function setWhitelisted(address[] calldata _accounts, bool _isWhitelisted) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 len = _accounts.length;
         for (uint256 i = 0; i < len; i++) {
@@ -361,6 +364,9 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         }
     }
 
+    /// @notice function to set the allocations
+    /// @param _accounts Addresses to set the allocations for
+    /// @param _allocations Allocations to set for the addresses by index
     function setAllocations(
         address[] calldata _accounts,
         uint256[] calldata _allocations
@@ -370,8 +376,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         if (len != _allocations.length) revert LengthMismatch();
 
         for (uint256 i = 0; i < len; i++) {
-            if (allocations[_accounts[i]] != 0) revert AllocationsAlreadySet(_accounts[i]);
-            if (_allocations[i] == 0) revert ZeroAmount();
             if (isWhitelisted[_accounts[i]] == false) revert NotWhitelisted(_accounts[i]);
 
             allocations[_accounts[i]] = _allocations[i];
