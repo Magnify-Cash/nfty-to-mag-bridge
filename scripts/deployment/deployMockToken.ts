@@ -1,15 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import hre from "hardhat";
 import path from "path";
-const { ethers } = hre;
+
 import { getAddressSaver, verify } from "./utils/helpers";
 
-const name = "SPHYNX BNB";
-const symbol = "SPHYNX";
-const decimals = 18;
+const { ethers } = hre;
+
+async function getTokenInfo() {
+    const chainId = (await ethers.provider.getNetwork()).chainId;
+
+    if (chainId == 84532n) {
+        return ["MAG", "MAG", 18n] as const;
+    } else {
+        return ["NFTY", "NFTY", 18n] as const;
+    }
+}
+
 async function main() {
     const [deployer] = await ethers.getSigners();
     const network = (await ethers.getDefaultProvider().getNetwork()).name; // Getting of the current network
+    const [name, symbol, decimals] = await getTokenInfo();
     const addressesPath = path.join(__dirname, "../deployment/deploymentAddresses.json");
     const saveAddress = getAddressSaver(addressesPath, network, true);
 
@@ -19,18 +28,17 @@ async function main() {
     console.log("* ", decimals, "- Token decimals");
     console.log("\n --- ------- ---- --- ");
 
-    const MockToken = (await ethers.getContractFactory("MockToken"));
-    const token = await MockToken.connect(deployer).deploy(
-        name, symbol, decimals
-    );
-    await token.deployed();
+    const token = await ethers.deployContract("MockToken", [name, symbol, decimals], deployer);
+    await token.waitForDeployment();
 
-    saveAddress(await token.symbol(), token.address, false);
-    console.log("Deployment is completed.")
-    await verify(token.address, [name, symbol, decimals]);
+    const tokenAddress = token.target.toString();
+
+    saveAddress(await token.symbol(), tokenAddress, false);
+    console.log("Deployment is completed.");
+    await verify(tokenAddress, [name, symbol, decimals]);
 }
 
 main().catch((error) => {
- console.error(error);
- process.exitCode = 1;
+    console.error(error);
+    process.exitCode = 1;
 });
