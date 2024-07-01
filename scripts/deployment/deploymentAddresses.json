@@ -16,13 +16,42 @@
     "sepolia": {
         "old": {},
         "new": {
-            "Bridge": "0xc097dec7C6a0AeC40869c47cb97fe3C8D9BCFC00"
+            "Bridge": "0x87d4D5574AE46875304A2cD5Ac7e2fE57dC5bC43",
+            "NFTYBridge": "0xEdE94C45f5e25cB0B48713a3DcA6DCc5adF5d513"
         }
     },
     "polygonAmoy": {
         "old": {},
         "new": {
-            "Bridge": "0x2De9Fe06F63EE70Fd6954519378053f610B8B726"
+            "Bridge": "0x15a497b58d67f6F4ef1e6F775Bc26e86bF5Fca21",
+            "NFTYBridge": "0xc02bdBEfcEeff5985664513f34a990c7CF54547F"
+        }
+    },
+    "bnbTestnet": {
+        "old": {},
+        "new": {
+            "Bridge": "0x71dA486e6A22D2Ec0d44dA63FcA72C57B859340D"
+        }
+    },
+    "bscTestnet": {
+        "old": {},
+        "new": {
+            "Bridge": "0x8b8291e7fF90f5876738381A818A5222f31AECe8",
+            "NFTYBridge": "0xaB2C4DAb32a8a07dD0403E23ab67b4E787270ace"
+        }
+    },
+    "mainnet": {
+        "old": {},
+        "new": {
+            "MAG": "0x59AAAc03AC70fdF926871BD0406606dbcc97C6F3",
+            "NFTY": "0x0B5d53E3b79e3317A17AD5F61910d4F807eCa56a"
+        }
+    },
+    "baseSepolia": {
+        "old": {},
+        "new": {
+            "MAGBridge": "0x2B7F14f2958b738D768b75cE3B57e1dcC13C7d8d",
+            "MAGToken": "0x59AAAc03AC70fdF926871BD0406606dbcc97C6F3"
         }
     }
 }
