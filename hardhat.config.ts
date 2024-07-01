@@ -41,11 +41,30 @@ import "solidity-docgen"; // The tool by OpenZeppelin to generate documentation 
  * Setting in `.env` file.
  */
 // prettier-ignore
+// private key of the sender account
 const PRIVATE_KEY=process.env.PRIVATE_KEY || ""
+
+// Ethereum network configuration.
 const SEPOLIA_URL = process.env.SEPOLIA_URL || "";
+const MAINNET_URL = process.env.MAINNET_URL || "";
+
+// Polygon network configuration.
 const AMOY_URL = process.env.AMOY_URL || "";
+const POLYGON_MAINNET_URL = process.env.POLYGON_MAINNET_URL || "";
+
+// BNB network configuration.
+const BNB_TESTNET_URL = process.env.BNB_TESTNET_URL || "";
+const BNB_MAINNET_URL = process.env.BNB_MAINNET_URL || "";
+
+// Base network configuration.
+const BASE_TESTNET_URL = process.env.BASE_TESTNET_URL || "";
+const BASE_MAINNET_URL = process.env.BASE_MAINNET_URL || "";
+
+// Scans API keys.
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || "";
+const BNBSCAN_API_KEY = process.env.BNBSCAN_API_KEY || "";
+const BASE_API_KEY = process.env.BASE_API_KEY || "";
 
 /*
  * The solc compiler optimizer configuration. (The optimizer is disabled by default).
@@ -66,8 +85,8 @@ const config: HardhatUserConfig = {
                 version: "0.8.17",
                 settings: {
                     optimizer: {
-                        enabled: ENABLED_OPTIMIZER,
-                        runs: OPTIMIZER_RUNS
+                        enabled: true,
+                        runs: 200
                     }
                 }
             },
@@ -75,20 +94,11 @@ const config: HardhatUserConfig = {
                 version: "0.8.26",
                 settings: {
                     optimizer: {
-                        enabled: ENABLED_OPTIMIZER,
-                        runs: OPTIMIZER_RUNS
+                        enabled: true,
+                        runs: 200
                     }
                 }
             }
-            // { // Example of adding of multiple compiler versions within the same project.
-            //     version: "0.7.6",
-            //     settings: {
-            //         optimizer: {
-            //             enabled: ENABLED_OPTIMIZER,
-            //             runs: OPTIMIZER_RUNS
-            //         }
-            //     }
-            // }
         ] //,
         // overrides: { // Example of specifying of a compiler for a specified contract.
         //     "contracts/Foo.sol": {
@@ -120,13 +130,36 @@ const config: HardhatUserConfig = {
         },
         // Ethereum.
         // Rest parameter (...) to treat it as a single array (added in ES6)
-
+        mainnet: {
+            url: process.env.MAINNET_URL || "",
+            accounts: [PRIVATE_KEY]
+        },
         sepolia: {
             url: SEPOLIA_URL,
             accounts: [PRIVATE_KEY]
         },
+        polygon: {
+            url: POLYGON_MAINNET_URL,
+            accounts: [PRIVATE_KEY]
+        },
         polygonAmoy: {
             url: AMOY_URL,
+            accounts: [PRIVATE_KEY]
+        },
+        bsc: {
+            url: BNB_MAINNET_URL,
+            accounts: [PRIVATE_KEY]
+        },
+        bscTestnet: {
+            url: BNB_TESTNET_URL,
+            accounts: [PRIVATE_KEY]
+        },
+        base: {
+            url: BASE_MAINNET_URL,
+            accounts: [PRIVATE_KEY]
+        },
+        baseSepolia: {
+            url: BASE_TESTNET_URL,
             accounts: [PRIVATE_KEY]
         }
     },
@@ -164,8 +197,14 @@ const config: HardhatUserConfig = {
          * https://hardhat.org/hardhat-runner/plugins/nomiclabs-hardhat-etherscan#multiple-api-keys-and-alternative-block-explorers.
          */
         apiKey: {
+            mainnet: ETHERSCAN_API_KEY,
             sepolia: ETHERSCAN_API_KEY,
-            polygonAmoy: POLYGONSCAN_API_KEY
+            polygon: POLYGONSCAN_API_KEY,
+            polygonAmoy: POLYGONSCAN_API_KEY,
+            bsc: BNBSCAN_API_KEY,
+            bscTestnet: BNBSCAN_API_KEY,
+            base: BASE_API_KEY,
+            baseSepolia: BASE_API_KEY
         },
         customChains: [
             // {
@@ -174,14 +213,6 @@ const config: HardhatUserConfig = {
             //     urls: {
             //         apiURL: AMOY_URL,
             //         browserURL: "https://amoy.polygonscan.com/" || ""
-            //     }
-            // },
-            // {
-            //     network: "loop_testnet",
-            //     chainId: 12345,
-            //     urls: {
-            //         apiURL: process.env.LOOP_TESTNET_URL || "",
-            //         browserURL: process.env.LOOP_TESTNET_EXPLORER_URL || ""
             //     }
             // }
         ]
