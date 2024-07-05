@@ -1,25 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import hre from "hardhat";
 const { ethers } = hre;
-
-// List of token addresses on testnet
-const mockTokenBase = "0xaC9809c3cdBa4052F39501DEC700fc23776e40AF";
-const mockTokenSepolia = "0x6c28de594318C8AB116Ad5865A7fc4b75a8e1dfe";
-const mockTokenPolygon = "0x0B5d53E3b79e3317A17AD5F61910d4F807eCa56a";
-const mockTokenBSC = "0x5Ce62153Cd1F7Da9099d81b58906C0843886dd5D";
+import { addDec } from "../test/helpers";
 
 // List of token addresses on mainnet
 const NFTY_ETH = "0xe1d7c7a4596b038ced2a84bf65b8647271c53208";
 const NFTY_POLYGON = "0xcc081220542a60a8ea7963c4f53d522b503272c1";
 const NFTY_BSC = "0x5774b2fc3e91af89f89141eacf76545e74265982";
 const MAG_BASE = "";
-
-// List of bridge addresses on testnet
-const bridgePolygon = "0xc02bdBEfcEeff5985664513f34a990c7CF54547F";
-const bridgeBase = "0x2B7F14f2958b738D768b75cE3B57e1dcC13C7d8d";
-const bridgeSepolia = "0x61CBae779BbC5Ede08C6010C1b0922523bA83Fc3";
-
-const bridgeBSC = "0xaB2C4DAb32a8a07dD0403E23ab67b4E787270ace";
 
 // List of bridge addresses on mainnet
 const bridgePolygonMainnet = "";
@@ -31,11 +19,14 @@ import holdersBsc from "./snapshots/tokenHoldersBsc.json";
 import holdersEth from "./snapshots/tokenHoldersEthereum.json";
 import holdersPolygon from "./snapshots/tokenHoldersPolygon.json";
 
+const whitelist = ["0xe04Ccb301583eeE3cbCd271ed74E547F8271977b"];
+const allocations = [addDec(100_000)];
+
 async function main() {
     const [deployer] = await ethers.getSigners();
 
     const [bridgeAddress, tokenAddress, networkName] = await getBridgeAddresses();
-    const { whitelist: whitelist, allocations: allocations } = await getWhitelistWithAllocations(networkName);
+    // const { whitelist: whitelist, allocations: allocations } = await getWhitelistWithAllocations(networkName);
     const { amountToSlice: amountToSlice } = await getStepsAmount(networkName);
 
     if (networkName != "BASE") {
@@ -147,26 +138,12 @@ async function getStepsAmount(networkName: string) {
 async function getBridgeAddresses() {
     const chainId = (await ethers.provider.getNetwork()).chainId;
 
-    if (chainId == 11155111n) {
-        return [bridgeSepolia, mockTokenSepolia, "ETH"];
-    } else if (chainId == 1n) {
+    if (chainId == 1n) {
         return [bridgeEthMainnet, NFTY_ETH, "ETH"];
-    }
-
-    if (chainId == 80002n) {
-        return [bridgePolygon, mockTokenPolygon, "POLYGON"];
     } else if (chainId == 137n) {
         return [bridgePolygonMainnet, NFTY_POLYGON, "POLYGON"];
-    }
-
-    if (chainId == 97n) {
-        return [bridgeBSC, mockTokenBSC, "BSC"];
     } else if (chainId == 56n) {
         return [bridgeBscMainnet, NFTY_BSC, "BSC"];
-    }
-
-    if (chainId == 84532n) {
-        return [bridgeBase, mockTokenBase, "BASE"];
     } else {
         return [bridgeBaseMainnet, MAG_BASE, "BASE"];
     }
