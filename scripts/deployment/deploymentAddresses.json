@@ -17,14 +17,14 @@
         "old": {},
         "new": {
             "Bridge": "0x87d4D5574AE46875304A2cD5Ac7e2fE57dC5bC43",
-            "NFTYBridge": "0xEdE94C45f5e25cB0B48713a3DcA6DCc5adF5d513"
+            "NFTYBridge": "0xf98f635214a14610516423382D9bF562C5386512"
         }
     },
     "polygonAmoy": {
         "old": {},
         "new": {
             "Bridge": "0x15a497b58d67f6F4ef1e6F775Bc26e86bF5Fca21",
-            "NFTYBridge": "0xc02bdBEfcEeff5985664513f34a990c7CF54547F"
+            "NFTYBridge": "0xe76a587296294211cbAE2A3Fefe83441E2a956A3"
         }
     },
     "bnbTestnet": {
@@ -37,7 +37,7 @@
         "old": {},
         "new": {
             "Bridge": "0x8b8291e7fF90f5876738381A818A5222f31AECe8",
-            "NFTYBridge": "0xaB2C4DAb32a8a07dD0403E23ab67b4E787270ace"
+            "NFTYBridge": "0xfB548718eCBa9Df6ddb67864F38Bf3decE9771e9"
         }
     },
     "mainnet": {
@@ -50,7 +50,7 @@
     "baseSepolia": {
         "old": {},
         "new": {
-            "MAGBridge": "0x2B7F14f2958b738D768b75cE3B57e1dcC13C7d8d",
+            "MAGBridge": "0x4a53821bFACE475420ce2c31470efbb44a645764",
             "MAGToken": "0x59AAAc03AC70fdF926871BD0406606dbcc97C6F3"
         }
     }
