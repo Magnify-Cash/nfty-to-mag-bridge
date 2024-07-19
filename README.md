@@ -666,3 +666,249 @@ This script automates the setup process for the `NFTYBridge` and `MAGBridge` con
 **Important Note:**
 
 Ensure that the bridge contracts have been properly deployed.
+
+## DEPLOYMENT AND SETUP FLOW
+
+### №1. Project setup
+
+Fist of all make sure that you set all environment variables.
+You can find all of them in file ([.env.example](.env.example)). Create a new file with name `.env` and copy all of the variables to this file. Uncomment them by removing sign `#` and set all values.
+
+-   **Don't forget that this is private variables and DO NOT SHARE THEM WITH OTHERS**
+
+Then you can run command and wait until command is done.
+
+```bash
+npm i
+```
+
+To make sure that everything is done you can run command below to be sure that all tests are working.
+
+```bash
+npm run dev:coverage
+```
+
+### №2. Snapshot creation
+
+Scripts for making snapshots locate at folder [`snapshots`](./scripts/snapshots/)
+
+Before running scripts it is important to update `pages` variable for each script. Getting holders are possible only through the pages for 100 holders. Amount of holders can be found on scans of tokens. Here is a links:
+
+-   [Ethereum](https://etherscan.io/token/0xe1d7c7a4596b038ced2a84bf65b8647271c53208)
+-   [Binance](https://bscscan.com/token/0x5774b2fc3e91af89f89141eacf76545e74265982)
+-   [Polygon](https://polygonscan.com/token/0xcc081220542a60a8ea7963c4f53d522b503272c1)
+
+So if holders are 12590, pages should be around 126.
+
+After updating amount of pages scripts are ready for running.
+
+Run commands for snapshots:
+
+-   **Ethereum**
+
+```bash
+npx hardhat run scripts/snapshots/snapshotEthereum.ts
+```
+
+-   **Binance**
+
+```bash
+npx hardhat run scripts/snapshots/snapshotBsc.ts
+```
+
+-   **Polygon**
+
+```bash
+npx hardhat run scripts/snapshots/snapshotPolygon.ts
+```
+
+All list of holders can be found in files:
+
+-   [Binance Holders](./scripts/snapshots/tokenHoldersBsc.json)
+-   [Ethereum Holders](./scripts/snapshots/tokenHoldersEthereum.json)
+-   [Polygon Holders](./scripts/snapshots/tokenHoldersPolygon.json)
+
+### №3. NFTY Bridge deployment
+
+NFTY bridge is responsible for deploying bridges for Ethereum, Polygon and Binance chains.
+
+There are 2 settings: for relayer address that is responsible for refunding tokens and returning them back. And duration of time when user can refund tokens manually if tokens are migrated to Base bridge.
+
+They can be changed later but required for deployment
+
+To deploy bridge on mainnet networks run:
+
+-   **Ethereum**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network mainnet
+```
+
+-   **Polygon**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network polygon
+```
+
+-   **Binance**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network bsc
+```
+
+**Testnet networks**:
+
+-   **Ethereum**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network sepolia
+```
+
+-   **Polygon**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network polygonAmoy
+```
+
+-   **Binance**
+
+```bash
+npx hardhat run scripts/deployment/deployNFTYBridge.ts --network bscTestnet
+```
+
+⚠️**Save addresses of deploy bridges. You need them to update future script for setup bridges**
+
+All bridges should automatically be verified after deploy.
+
+### №4. MAG Bridge deployment
+
+NFTY bridge is responsible for deploying bridge for Base network.
+
+There are 2 settings: for relayer address that is responsible for sending tokens to user. And second chain id which is not recommended to change.
+
+To deploy bridge on base network run:
+
+-   **Base**
+
+```bash
+npx hardhat run scripts/deployment/deployMAGBridge.ts --network base
+```
+
+**Testnet network**:
+
+-   **Base testnet**
+
+```bash
+npx hardhat run scripts/deployment/deployMAGBridge.ts --network baseSepolia
+```
+
+⚠️**Save address of deploy bridge. You need them to update future script for setup bridges**
+
+Bridge should automatically be verified after deploy.
+
+### №5. MAG Token deployment
+
+Script for deploy token can be found at [deploy script](./scripts/deployment/deployMAGToken.ts)
+
+There are 3 params that must be set before deploy, address of the MAG bridge on testnet and mainnet (base network):
+
+-   `testnetBridge` = "";
+-   `mainnetBridge` = "";
+
+And total supply of the token, for now it is set 100 millions of tokens.
+
+To get value that must be sent to MAG bridge can be get by running script [getTotalAmountForBridge](./scripts/getTotalAmountForBridge.ts).
+
+Command to run script:
+
+```bash
+npx hardhat run scripts/getTotalAmountForBridge.ts
+```
+
+After setting total supply and bridge addresses you can run command to deploy tokens. All supply will be minted to deployer address.
+
+-   **Base**
+
+```bash
+npx hardhat run scripts/deployment/deployMAGToken.ts --network base
+```
+
+-   **Base Sepolia Testnet**
+
+```bash
+npx hardhat run scripts/deployment/deployMAGToken.ts --network baseSepolia
+```
+
+⚠️ There is no functionality for transferring tokens to MAG bridge, so you need to do it manually (Base network mainnet).
+
+### №6. Bridge setup (Testnets)
+
+Script for setting all params for testnet bridges locate [here](./scripts/setupTestnets.ts)
+
+You can set list of tokens that needs to be transferred to MAG bridge. They already set and have option to mint tokens for everyone. But if you want you can change them.
+
+Also list of bridges that you already deployed. They also set but if you want you can change them to nearly deployed.
+
+Whitelist users that can send tokens to NFTY bridges and allocations for them. Remember that number of users and allocation must be same amount.
+
+And relayers addresses that are responsible for refunding, block refunding and withdraw tokens for users.
+
+To run setup script for **NFTY bridges** run:
+
+-   **Sepolia**
+
+```bash
+npx hardhat run scripts/setupTestnets.ts --network sepolia
+```
+
+-   **Binance**
+
+```bash
+npx hardhat run scripts/setupTestnets.ts --network bscTestnet
+```
+
+-   **Polygon Amoy**
+
+```bash
+npx hardhat run scripts/setupTestnets.ts --network polygonAmoy
+```
+
+To run setup script for **MAG bridge** run:
+
+```bash
+npx hardhat run scripts/setupTestnets.ts --network baseSepolia
+```
+
+### №7. Bridge setup (Mainnet)
+
+⚠️ Before running add all nearly deployed bridges addresses and MAG token address. Addresses for NFTY tokens already set. Make sure that you run snapshot scripts and all of the users are added to `.json` files with their holding amounts.
+
+As users may be more that 500 there is an algorithm that calculate how many `setWhitelisted` and `setAllocations` functions must be done without error gas estimate, so everything will be automatically. The amount of transactions may be more than 20, so make sure you have funds on your wallet.
+
+After setting all variables you can run commands for NFTY bridges
+
+-   **Mainnet Ethereum**
+
+```bash
+npx hardhat run scripts/setup.ts --network mainnet
+```
+
+-   **Mainnet Binance**
+
+```bash
+npx hardhat run scripts/setup.ts --network bsc
+```
+
+-   **Mainnet Polygon**
+
+```bash
+npx hardhat run scripts/setup.ts --network polygon
+```
+
+For MAG bridge:
+
+-   **Mainnet Base**
+
+```bash
+npx hardhat run scripts/setup.ts --network base
+```
