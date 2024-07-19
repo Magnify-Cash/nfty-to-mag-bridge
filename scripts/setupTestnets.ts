@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import hre from "hardhat";
 const { ethers } = hre;
+import { addDec } from "../test/helpers";
 
 // List of token addresses on testnet
 const mockTokenBase = "0xaC9809c3cdBa4052F39501DEC700fc23776e40AF";
@@ -13,8 +14,6 @@ const bridgePolygon = "0xe76a587296294211cbAE2A3Fefe83441E2a956A3";
 const bridgeBase = "0x4a53821bFACE475420ce2c31470efbb44a645764";
 const bridgeSepolia = "0xf98f635214a14610516423382D9bF562C5386512";
 const bridgeBSC = "0xfB548718eCBa9Df6ddb67864F38Bf3decE9771e9";
-
-import { addDec } from "../test/helpers";
 
 const whitelist = [
     "0xe04Ccb301583eeE3cbCd271ed74E547F8271977b",
@@ -44,6 +43,7 @@ const relayersNFTY = [
 async function main() {
     const [deployer] = await ethers.getSigners();
 
+    // @ts-ignore
     const [bridgeAddress, tokenAddress, networkName] = await getBridgeAddresses();
 
     if (networkName != "BASE") {

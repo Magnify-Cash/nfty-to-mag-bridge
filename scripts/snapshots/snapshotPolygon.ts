@@ -12,6 +12,7 @@ const apiKey = process.env.MORALIS_API_KEY;
 const NFTY_POLYGON_ADDRESS = "0xCC081220542a60A8Ea7963C4F53D522b503272c1";
 
 async function main() {
+    console.log("Starting snapshot...");
     const filePath = path.join(__dirname, "./tokenHoldersPolygon.json");
 
     await Moralis.start({
@@ -64,6 +65,8 @@ async function main() {
     });
 
     fs.writeFileSync(filePath, JSON.stringify(filterdata, null, 2));
+
+    console.log("Snapshot complete!");
 }
 
 main().catch((error) => {

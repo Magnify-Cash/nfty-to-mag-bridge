@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import hre from "hardhat";
 const { ethers } = hre;
-import { addDec } from "../test/helpers";
 
 // List of token addresses on mainnet
 const NFTY_ETH = "0xe1d7c7a4596b038ced2a84bf65b8647271c53208";
@@ -19,14 +18,11 @@ import holdersBsc from "./snapshots/tokenHoldersBsc.json";
 import holdersEth from "./snapshots/tokenHoldersEthereum.json";
 import holdersPolygon from "./snapshots/tokenHoldersPolygon.json";
 
-const whitelist = ["0xe04Ccb301583eeE3cbCd271ed74E547F8271977b"];
-const allocations = [addDec(100_000)];
-
 async function main() {
     const [deployer] = await ethers.getSigners();
 
     const [bridgeAddress, tokenAddress, networkName] = await getBridgeAddresses();
-    // const { whitelist: whitelist, allocations: allocations } = await getWhitelistWithAllocations(networkName);
+    const { whitelist: whitelist, allocations: allocations } = await getWhitelistWithAllocations(networkName);
     const { amountToSlice: amountToSlice } = await getStepsAmount(networkName);
 
     if (networkName != "BASE") {
@@ -69,9 +65,6 @@ async function main() {
         console.log("Adding token...");
 
         // Add token
-        // Uncomment next line if it is running on testnet, comment if not
-        // await bridge.addToken(tokenAddress, mockTokenBase, 8n);
-        // Uncomment next line if it is running on mainnet, uncomment if not
         await bridge.addToken(tokenAddress, MAG_BASE, 8n);
 
         console.log("Done!");

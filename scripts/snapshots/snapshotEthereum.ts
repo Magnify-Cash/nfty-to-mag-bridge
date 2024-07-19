@@ -12,6 +12,7 @@ const apiKey = process.env.MORALIS_API_KEY;
 const NFTY_ETH_ADDRESS = "0xe1d7c7a4596b038ced2a84bf65b8647271c53208";
 
 async function main() {
+    console.log("Starting snapshot...");
     const filePath = path.join(__dirname, "./tokenHoldersEthereum.json");
 
     await Moralis.start({
@@ -64,6 +65,8 @@ async function main() {
     });
 
     fs.writeFileSync(filePath, JSON.stringify(filterdata, null, 2));
+
+    console.log("Snapshot complete!");
 }
 
 main().catch((error) => {

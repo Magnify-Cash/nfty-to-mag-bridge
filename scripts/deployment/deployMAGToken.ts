@@ -2,7 +2,7 @@ import hre from "hardhat";
 import path from "path";
 
 import { getAddressSaver, verify } from "./utils/helpers";
-import { getTotalSupply } from "../utils/getTotalSupply";
+import { getTotalAmountForBridge } from "../getTotalAmountForBridge";
 import { addDec } from "../../test/helpers";
 
 const { ethers } = hre;
@@ -10,13 +10,15 @@ const { ethers } = hre;
 // Total supply of tokens to be minted during deployment
 // For default value is 100_000_000 + 18 decimals
 const TOTAL_SUPPLY = addDec(100_000_000);
-const { amountForBridge, totalSupply } = getTotalSupply();
+const { amountForBridge } = getTotalAmountForBridge();
 
 console.log("Predicted amount for bridge", amountForBridge);
 
 // Address of the bridge contract on BASE network
-const testnetBridge = "0xaB2C4DAb32a8a07dD0403E23ab67b4E787270ace";
+const testnetBridge = "";
 const mainnetBridge = "";
+
+const totalSupply = addDec(100_000_000);
 
 async function main() {
     const [deployer] = await ethers.getSigners();

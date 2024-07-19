@@ -12,6 +12,8 @@ const apiKey = process.env.MORALIS_API_KEY;
 const NFTY_BSC_ADDRESS = "0x5774b2fc3e91af89f89141eacf76545e74265982";
 
 async function main() {
+    console.log("Starting snapshot...");
+
     const filePath = path.join(__dirname, "./tokenHoldersBsc.json");
 
     await Moralis.start({
@@ -64,6 +66,8 @@ async function main() {
     });
 
     fs.writeFileSync(filePath, JSON.stringify(filterdata, null, 2));
+
+    console.log("Snapshot complete!");
 }
 
 main().catch((error) => {
