@@ -7,7 +7,7 @@ import { ethers, upgrades } from "hardhat";
 import { MAGToken } from "../typechain-types";
 import { addDec } from "./helpers";
 
-describe.only("MAG Token", function () {
+describe("MAG Token", function () {
     let snapshotA: SnapshotRestorer;
 
     // Signers.
