@@ -1,56 +1,61 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import hre from "hardhat";
-const { ethers } = hre;
+import { ethers, network } from "hardhat";
 import { addDec } from "../test/helpers";
+import { MockToken } from "../typechain-types";
 
 const to = [
+    "0x0309004C4fB9943797f5C530abd8cddE564A9fD4",
+    "0xF3Bc8C5F2A857d68D5809f02352C9d73656d74D4",
+    "0x0b20EEd40cB02513a4a50Aca5ca37c824d63dc67",
     "0x89758E3b31DdECaBdBFdf6416d153CE611DF903a",
     "0x0309004C4fB9943797f5C530abd8cddE564A9fD4",
     "0x35c7371cdF8b8866b5Fd97e9A324F1821300B140",
     "0xe04Ccb301583eeE3cbCd271ed74E547F8271977b",
-    "0xdEdecb49487AbD56aF4a99e2e3D4C63068658e23"
+    "0xdEdecb49487AbD56aF4a99e2e3D4C63068658e23",
+    "0x32e2056d4Fa1470Ae47a94bbc5a8E5eAFdF71E32",
+    "0x44A24f43e2a0A668917749f35Fa10Ac29FB9a544",
+    "0x0309004C4fB9943797f5C530abd8cddE564A9fD4"
 ];
 
-const mockTokenBase = "0xaC9809c3cdBa4052F39501DEC700fc23776e40AF";
-const mockTokenSepolia = "0x6c28de594318C8AB116Ad5865A7fc4b75a8e1dfe";
-const mockTokenPolygon = "0x0B5d53E3b79e3317A17AD5F61910d4F807eCa56a";
-const mockTokenBSC = "0x5Ce62153Cd1F7Da9099d81b58906C0843886dd5D";
+const NFTYSepolia = "0x56D2a6fC1aECf6C14B98f53fAa095d962615C2f1";
+const MAGSepolia = "0xC38b03122035701B64712FA7cD309ddCA8Ffb535";
 
-const amountToMint = addDec(1_000_000);
+const NFTYPolygon = "0xbDA91415bC7e77b461116778F24Ac2D91d25A298";
+
+const NFTYBsc = "0xe3D2c52CA3C9C32Fd0E3c897afaDbB414bc207Df";
+
+const amountToMint = addDec(100_000);
 
 async function main() {
-    const networkName = await getNetworkName();
-    const tokenAddress = (await getTokenAddress(networkName)) || "";
+    console.log("Starting minting...");
 
-    const token = await ethers.getContractAt("MockToken", tokenAddress);
+    if (network.name == "sepolia") {
+        const nftyToken = await ethers.getContractAt("MockToken", NFTYSepolia);
+        const magToken = await ethers.getContractAt("MockToken", MAGSepolia);
 
-    for (const address of to) {
-        console.log("Minting tokens for", address);
+        await mintToken(nftyToken, to, amountToMint);
+        await mintToken(magToken, to, amountToMint);
+    }
 
-        const tx = await token.mintFor(address, amountToMint);
-        await tx.wait(1);
+    if (network.name == "polygonAmoy") {
+        const nftyToken = await ethers.getContractAt("MockToken", NFTYPolygon);
+        await mintToken(nftyToken, to, amountToMint);
+    }
 
-        console.log("Tokens minted for", address);
+    if (network.name == "bscTestnet") {
+        const nftyToken = await ethers.getContractAt("MockToken", NFTYBsc);
+        await mintToken(nftyToken, to, amountToMint);
     }
 
     console.log("All tokens minted");
 }
 
-async function getNetworkName() {
-    const chainId = (await ethers.provider.getNetwork()).chainId;
-
-    if (chainId == 11155111n) return "ETH";
-    if (chainId == 97n) return "BSC";
-    if (chainId == 80002n) return "POLYGON";
-
-    return "BASE";
-}
-
-async function getTokenAddress(networkName: string) {
-    if (networkName == "ETH") return mockTokenSepolia;
-    if (networkName == "BSC") return mockTokenBSC;
-    if (networkName == "POLYGON") return mockTokenPolygon;
-    if (networkName == "BASE") return mockTokenBase;
+async function mintToken(token: MockToken, receivers: string[], amount: bigint) {
+    for (const receiver of receivers) {
+        const tx = await token.mintFor(receiver, amount);
+        await tx.wait(1);
+    }
 }
 
 main().catch((error) => {
