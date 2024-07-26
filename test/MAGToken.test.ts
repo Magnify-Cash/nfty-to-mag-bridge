@@ -33,7 +33,7 @@ describe("MAG Token", function () {
 
     afterEach(async () => await snapshotA.restore());
 
-    describe("Constructor", function () {
+    describe("# Constructor", function () {
         it("Should set all values correctly", async () => {
             expect(await token.name()).to.be.equal("MAG Token");
             expect(await token.symbol()).to.be.equal("MAG");
