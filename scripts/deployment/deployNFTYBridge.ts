@@ -45,13 +45,13 @@ async function main() {
 async function getNetworkName() {
     const chainId = (await ethers.provider.getNetwork()).chainId;
 
-    if (chainId == 11155111n) return ["ETH-", 84532n];
+    if (chainId == 11155111n) return ["ETH-", 11155111n];
     if (chainId == 1n) return ["ETH-", 8453n];
 
-    if (chainId == 97n) return ["BSC-", 84532n];
+    if (chainId == 97n) return ["BSC-", 11155111n];
     if (chainId == 56n) return ["BSC-", 8453n];
 
-    if (chainId == 80002n) return ["POLYGON-", 84532n];
+    if (chainId == 80002n) return ["POLYGON-", 11155111n];
     if (chainId == 137n) return ["POLYGON-", 8453n];
 
     throw new Error("Network not supported");
