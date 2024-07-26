@@ -1,30 +1,18 @@
 {
-    "homestead": {
-        "old": {},
-        "new": {
-            "MNT": "0x16477DA321C12De45D0bD9CCceAB979f4127ba4F",
-            "WETH": "0xcF7651e0825609E446e6f43456709991323240e3",
-            "Bridge": "0x5890C624d04677379ba9a9b78c7Af50e4c7df6E2",
-            "LOOP": "0x33cA0D2ac807BD6C7D8A79a8EF7d14B6f7d16DD0",
-            "WBSC": "0x3114320515c6d23e1D0410437BE3ae8E8f9c564e",
-            "WLOOP": "0x145a5e49aDB20394f91622d7cc0CA2Cc05B03A07",
-            "WPOOL": "0x8f8B7C2C3E3D267D7210f85c6E4d9512f1d6Aac6",
-            "WBNB": "0x145a5e49aDB20394f91622d7cc0CA2Cc05B03A07",
-            "SPHYNX": "0x6bB6B8b1C4ec10E138Cf2eE5880Be59044dbCAcf"
-        }
-    },
     "sepolia": {
         "old": {},
         "new": {
             "Bridge": "0x87d4D5574AE46875304A2cD5Ac7e2fE57dC5bC43",
-            "NFTYBridge": "0xf98f635214a14610516423382D9bF562C5386512"
+            "NFTYBridge": "0x55B9BE189844897e464Bbf69c2D797D270B5c5Df",
+            "MAGBridge": "0x83362A52cF7e3221A73763e508623be7f74f4eA3",
+            "NFTYMigrator": "0xb8E75E47fE7c195170747CC2Aa3CB862AF1c72b9"
         }
     },
     "polygonAmoy": {
         "old": {},
         "new": {
             "Bridge": "0x15a497b58d67f6F4ef1e6F775Bc26e86bF5Fca21",
-            "NFTYBridge": "0xe76a587296294211cbAE2A3Fefe83441E2a956A3"
+            "NFTYBridge": "0x23BA69D704929635225d2d78921E779E54aACF72"
         }
     },
     "bnbTestnet": {
@@ -37,14 +25,14 @@
         "old": {},
         "new": {
             "Bridge": "0x8b8291e7fF90f5876738381A818A5222f31AECe8",
-            "NFTYBridge": "0xfB548718eCBa9Df6ddb67864F38Bf3decE9771e9"
+            "NFTYBridge": "0xA0b09Ed92f434e8C8CF178f3cdA837bBd4b96C55"
         }
     },
     "mainnet": {
         "old": {},
         "new": {
-            "MAG": "0xd3870aE4CC701560552B9e0650983ab8794602D8",
-            "NFTY": "0x0B5d53E3b79e3317A17AD5F61910d4F807eCa56a"
+            "MAG": "0xC38b03122035701B64712FA7cD309ddCA8Ffb535",
+            "NFTY": "0xbDA91415bC7e77b461116778F24Ac2D91d25A298"
         }
     },
     "baseSepolia": {
@@ -52,6 +40,12 @@
         "new": {
             "MAGBridge": "0x4a53821bFACE475420ce2c31470efbb44a645764",
             "MAGToken": "0x59AAAc03AC70fdF926871BD0406606dbcc97C6F3"
+        }
+    },
+    "hardhat": {
+        "old": {},
+        "new": {
+            "NFTYMigrator": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
         }
     }
 }
