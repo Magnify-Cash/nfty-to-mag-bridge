@@ -25,14 +25,14 @@ contract MockToken is ERC20, AccessControl {
      * @param _receiver Receiver of the tokens.
      * @param _amount Amount (in wei - smallest decimals)
      */
-    function mintFor(address _receiver, uint256 _amount) external onlyOwner {
+    function mintFor(address _receiver, uint256 _amount) external {
         require(_receiver != address(0), "Zero address");
         require(_receiver != address(this), "Incorrect address");
         require(_amount > 0, "Incorrect amount");
         _mint(_receiver, _amount);
     }
 
-    function mint(uint256 _amount) external onlyOwner {
+    function mint(uint256 _amount) external {
         require(_amount > 0, "Incorrect amount");
         _mint(_msgSender(), _amount);
     }
