@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.26;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     // _______________ Libraries _______________
@@ -81,12 +81,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
     /// @notice Mapping of used nonces for refund (nonce => isRefunded)
     mapping(uint256 => bool) public nonceIsRefunded;
 
-    /// @notice Mapping of allocations of the address (address => allocations)
-    mapping(address => uint256) public allocations;
-
-    /// @notice Mapping of which addresses are whitelisted (address => isWhitelisted)
-    mapping(address => bool) public isWhitelisted;
-
     // _______________ Events _______________
 
     event Refund(address indexed token, address indexed to, uint256 amount, uint256 nonce);
@@ -130,16 +124,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
 
     error MinTimeToWaitBeforeRefundIsTooBig(uint256 minTimeToWaitBeforeRefund);
 
-    error InsufficientAmountToSend();
-
-    error NotWhitelisted(address caller);
-
-    error ZeroAmount();
-
-    error LengthMismatch();
-
-    error AllocationsAlreadySet(address user);
-
     error ZeroAddress();
 
     // _______________ Modifiers _______________
@@ -150,18 +134,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         if (!tokenIsSupported[token]) {
             revert TokenIsNotSupported(token);
         }
-        _;
-    }
-
-    modifier onlyWhitelisted(address caller, uint256 amount) {
-        if (!isWhitelisted[caller]) {
-            revert NotWhitelisted(caller);
-        }
-
-        if (amount > allocations[caller]) {
-            revert InsufficientAmountToSend();
-        }
-
         _;
     }
 
@@ -196,25 +168,17 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
     /// @param token Address of the token
     /// @param to Address of the receiver on the second chain
     /// @param amount Amount of tokens to send
-    function send(
-        address token,
-        address to,
-        uint256 amount
-    ) external whenNotPaused onlyWhitelisted(msg.sender, amount) onlySupportedToken(token) {
+    function send(address token, address to, uint256 amount) external whenNotPaused onlySupportedToken(token) {
         if (to == address(0)) revert ZeroAddress();
 
         if (amount >= minAmountForToken[token]) {
-            allocations[msg.sender] -= amount;
-            if (allocations[msg.sender] == 0) {
-                isWhitelisted[msg.sender] = false;
-            }
-
             uint256 amountToReceive = _convertNFTYtoMAG(amount);
 
             nonceInfo[nonce] = NonceInfo(token, msg.sender, to, amount, block.timestamp);
-            nonce++;
 
             emit Send(token, otherChainToken[token], to, amount, amountToReceive, _getChainNonce());
+
+            nonce++;
 
             IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
         } else {
@@ -265,10 +229,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         }
 
         /// Refund functionality.
-        allocations[nonceInfoToRefund.creator] += nonceInfoToRefund.amount;
-        if (isWhitelisted[nonceInfoToRefund.creator] == false) {
-            isWhitelisted[nonceInfoToRefund.creator] = true;
-        }
 
         emit Refund(nonceInfoToRefund.token, nonceInfoToRefund.to, nonceInfoToRefund.amount, nonceToRefund);
 
@@ -354,34 +314,6 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         emit NewMinTimeToWaitBeforeRefund(_minTimeToWaitBeforeRefund);
     }
 
-    /// @notice function to add or remove addresses from the whitelist
-    /// @param _accounts Addresses to add or remove from the whitelist
-    /// @param _isWhitelisted Whether to add or remove the addresses from the whitelist
-    function setWhitelisted(address[] calldata _accounts, bool _isWhitelisted) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 len = _accounts.length;
-        for (uint256 i = 0; i < len; i++) {
-            isWhitelisted[_accounts[i]] = _isWhitelisted;
-        }
-    }
-
-    /// @notice function to set the allocations
-    /// @param _accounts Addresses to set the allocations for
-    /// @param _allocations Allocations to set for the addresses by index
-    function setAllocations(
-        address[] calldata _accounts,
-        uint256[] calldata _allocations
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 len = _accounts.length;
-
-        if (len != _allocations.length) revert LengthMismatch();
-
-        for (uint256 i = 0; i < len; i++) {
-            if (isWhitelisted[_accounts[i]] == false) revert NotWhitelisted(_accounts[i]);
-
-            allocations[_accounts[i]] = _allocations[i];
-        }
-    }
-
     /// @notice function to pause the bridge
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
@@ -404,15 +336,23 @@ contract NFTYBridge is UUPSUpgradeable, AccessControlUpgradeable, PausableUpgrad
         return allWhitelistedTokens;
     }
 
-    /// @notice function to ensure that only admin can upgrade the contract
-    /// @param newImplementation Address of the new implementation
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+    /// @notice function to convert MAG to NFTY
+    /// @return Amount of NFTY tokens to receive
+    function getConvertedAmount(uint256 amount) external pure returns (uint256) {
+        return _convertNFTYtoMAG(amount);
+    }
+
+    /// @notice function to convert NFTY to MAG
+    /// @return Amount of MAG tokens to receive
+    function _convertNFTYtoMAG(uint256 amount) internal pure returns (uint256) {
+        return amount / DIVIDER;
+    }
 
     function _getChainNonce() internal view returns (string memory) {
         return string.concat(chain, Strings.toString(nonce));
     }
 
-    function _convertNFTYtoMAG(uint256 amount) internal pure returns (uint256) {
-        return amount / DIVIDER;
-    }
+    /// @notice function to ensure that only admin can upgrade the contract
+    /// @param newImplementation Address of the new implementation
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 }
