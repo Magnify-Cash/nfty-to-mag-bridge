@@ -52,32 +52,19 @@ describe("NFTY Bridge", function () {
     afterEach(async () => await snapshotA.restore());
 
     describe("# Send", function () {
-        beforeEach(async () => {
-            await bridge.setWhitelisted(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F"],
-                true
-            );
-            await bridge.setAllocations(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F"],
-                [addDec(10), addDec(10), addDec(10)]
-            );
-        });
-
         it("Should send tokens", async () => {
             const balanceBefore = await token.balanceOf(bridge);
 
             await token.connect(user).approve(bridge, addDec(8));
-            const tx = await bridge.connect(user).send(token, user.address, addDec(8));
+            await expect(bridge.connect(user).send(token, user.address, addDec(8)))
+                .to.emit(bridge, "Send")
+                .withArgs(token, tokenOnSecondChain.address, user.address, addDec(8), addDec(1), CHAIN + 0);
 
             const balanceAfter = await token.balanceOf(bridge);
 
             expect(balanceAfter).to.be.equal(balanceBefore + addDec(8));
-            expect(tx)
-                .to.emit(bridge, "Send")
-                .withArgs(token, tokenOnSecondChain.address, user.address, addDec(8), addDec(1), CHAIN + 0);
+
             expect(await bridge.nonce()).to.be.equal(1);
-            expect(await bridge.allocations(user.address)).to.be.equal(addDec(2));
-            expect(await bridge.isWhitelisted(user.address)).to.be.true;
         });
 
         it("Should revert if token is not added", async () => {
@@ -104,14 +91,6 @@ describe("NFTY Bridge", function () {
             );
         });
 
-        it("Should revert if caller is not in whitelist", async () => {
-            await bridge.setWhitelisted([user.address], false);
-
-            await expect(bridge.connect(user).send(token, user.address, ethers.parseEther("1")))
-                .to.be.revertedWithCustomError(bridge, "NotWhitelisted")
-                .withArgs(user.address);
-        });
-
         it("Should revert if receiver address on second chain is zero address", async () => {
             const receiver = ethers.ZeroAddress;
 
@@ -120,48 +99,9 @@ describe("NFTY Bridge", function () {
                 "ZeroAddress"
             );
         });
-
-        it("Should remove from whitelist when allocations becomes zero", async () => {
-            await bridge.addToken(token, tokenOnSecondChain.address, ethers.parseEther("0.1"));
-            await token.mintFor(user.address, addDec(10));
-            const balanceBefore = await token.balanceOf(bridge);
-            await token.connect(user).approve(bridge, addDec(10));
-            const tx = await bridge.connect(user).send(token, user.address, addDec(10));
-            const balanceAfter = await token.balanceOf(bridge);
-            expect(balanceAfter).to.be.equal(balanceBefore + addDec(10));
-
-            expect(tx)
-                .to.emit(bridge, "Send")
-                .withArgs(token, tokenOnSecondChain.address, user.address, ethers.parseEther("1"), CHAIN + 0);
-
-            expect(await bridge.allocations(user.address)).to.be.equal(0);
-            expect(await bridge.isWhitelisted(user.address)).to.be.false;
-        });
-
-        it("Should revert when sending amount is greater than allocations", async () => {
-            await bridge.addToken(token, tokenOnSecondChain.address, ethers.parseEther("0.1"));
-            await token.mintFor(user.address, ethers.parseEther("11"));
-            const balanceBefore = await token.balanceOf(bridge);
-            await token.connect(user).approve(bridge, ethers.parseEther("11"));
-
-            await expect(
-                bridge.connect(user).send(token, user.address, ethers.parseEther("11"))
-            ).to.be.revertedWithCustomError(bridge, "InsufficientAmountToSend");
-        });
     });
 
     describe("# Refund", function () {
-        beforeEach(async () => {
-            await bridge.setWhitelisted(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F"],
-                true
-            );
-            await bridge.setAllocations(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F"],
-                [addDec(10), addDec(10), addDec(10)]
-            );
-        });
-
         it("Should allow to block refund", async () => {
             await token.connect(user).approve(bridge, addDec(1));
             await bridge.connect(user).send(token, user2, addDec(1));
@@ -201,7 +141,6 @@ describe("NFTY Bridge", function () {
             await bridge.connect(user).send(token, receiver, amount);
 
             const userBalance = await token.balanceOf(user);
-            const allocations = await bridge.allocations(user);
 
             await time.increase(time.duration.minutes(5));
 
@@ -210,7 +149,6 @@ describe("NFTY Bridge", function () {
                 .withArgs(token, receiver, amount, nonceNumber);
 
             expect(await token.balanceOf(user)).to.be.equal(userBalance + amount);
-            expect(await bridge.allocations(user)).to.be.equal(allocations + amount);
             expect(await bridge.nonceIsRefunded(nonceNumber)).to.be.true;
 
             // Check that relayer can not make block refund
@@ -305,24 +243,6 @@ describe("NFTY Bridge", function () {
                 .withArgs(token, receiver, amount, nonceNumber2);
 
             expect(await token.balanceOf(user)).to.be.equal(userBalance);
-        });
-
-        it("Should set whitelisted back if user sent all allocation and make refund", async () => {
-            const nonceNumber = 0;
-            const amount = addDec(10);
-            const receiver = user2.address;
-
-            await token.connect(user).approve(bridge, amount);
-            await bridge.connect(user).send(token, receiver, amount);
-
-            expect(await bridge.isWhitelisted(user)).to.be.equal(false);
-
-            await time.increase(time.duration.minutes(5));
-
-            await expect(bridge.connect(user).refund(nonceNumber))
-                .to.emit(bridge, "Refund")
-                .withArgs(token, receiver, amount, nonceNumber);
-            expect(await bridge.isWhitelisted(user)).to.be.equal(true);
         });
     });
 
@@ -503,17 +423,6 @@ describe("NFTY Bridge", function () {
     });
 
     describe("# Removed token", function () {
-        beforeEach(async () => {
-            await bridge.setWhitelisted(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F", deployer.address],
-                true
-            );
-            await bridge.setAllocations(
-                [user.address, user2.address, "0x0165878A594ca255338adfa4d48449f69242Eb8F", deployer.address],
-                [addDec(10), addDec(10), addDec(10), addDec(10)]
-            );
-        });
-
         it("Should remove token", async () => {
             const newToken = await ethers.deployContract("MockToken", ["token", "ERC20", 18], deployer);
             await bridge.addToken(newToken, tokenOnSecondChain.address, ethers.parseEther("0.1"));
@@ -568,86 +477,21 @@ describe("NFTY Bridge", function () {
         });
     });
 
-    describe("# Whitelist controller", function () {
-        it("Should allow to add users to whitelist", async () => {
-            const whitelist = [user, user2];
-            const isWhitelisted = true;
+    describe("# Tokens conversion", function () {
+        it("Should allow to convert tokens correctly", async () => {
+            expect(await bridge.getConvertedAmount(7n)).to.eq(0n);
 
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
+            expect(await bridge.getConvertedAmount(8n)).to.eq(1n);
 
-            expect(await bridge.isWhitelisted(user.address)).to.be.equal(isWhitelisted);
-            expect(await bridge.isWhitelisted(user2.address)).to.be.equal(isWhitelisted);
-        });
+            expect(await bridge.getConvertedAmount(15n)).to.eq(1n);
 
-        it("Should allow to remove users from whitelist", async () => {
-            const whitelist = [user, user2];
-            let isWhitelisted = true;
+            expect(await bridge.getConvertedAmount(22n)).to.eq(2n);
 
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
+            expect(await bridge.getConvertedAmount(addDec(1000))).to.eq(addDec(125));
 
-            expect(await bridge.isWhitelisted(user.address)).to.be.equal(isWhitelisted);
-            expect(await bridge.isWhitelisted(user2.address)).to.be.equal(isWhitelisted);
+            expect(await bridge.getConvertedAmount(8625836n)).to.eq(1078229n);
 
-            isWhitelisted = false;
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
-
-            expect(await bridge.isWhitelisted(user.address)).to.be.equal(isWhitelisted);
-            expect(await bridge.isWhitelisted(user2.address)).to.be.equal(isWhitelisted);
-        });
-
-        it("Should allow to set allocations to users", async () => {
-            const whitelist = [user, user2];
-            const isWhitelisted = true;
-            const allocations = [addDec(0.1), addDec(0.2)];
-
-            await bridge.connect(deployer).setWhitelisted(whitelist, isWhitelisted);
-            await bridge.connect(deployer).setAllocations(whitelist, allocations);
-
-            expect(await bridge.allocations(user.address)).to.be.equal(allocations[0]);
-            expect(await bridge.allocations(user2.address)).to.be.equal(allocations[1]);
-        });
-
-        it("Should revert if user is not whitelisted during allocations setting", async () => {
-            const whitelist = [user];
-            const allocations = [addDec(0.1)];
-
-            await expect(bridge.connect(deployer).setAllocations(whitelist, allocations))
-                .to.be.revertedWithCustomError(bridge, "NotWhitelisted")
-                .withArgs(whitelist[0].address);
-        });
-
-        it("Should revert if caller is not admin", async () => {
-            const whitelist = [user, user2];
-            const allocations = [addDec(0.1), addDec(0.2)];
-            const isWhitelisted = true;
-
-            // Expect revert on setWhitelisted function
-            await expect(bridge.connect(user).setWhitelisted(whitelist, isWhitelisted)).to.be.revertedWith(
-                "AccessControl: account" +
-                    " " +
-                    user.address.toLocaleLowerCase() +
-                    " is missing role " +
-                    (await bridge.DEFAULT_ADMIN_ROLE()).toLocaleLowerCase()
-            );
-
-            // Expect revert on setAllocations function
-            await expect(bridge.connect(user).setAllocations(whitelist, allocations)).to.be.revertedWith(
-                "AccessControl: account" +
-                    " " +
-                    user.address.toLocaleLowerCase() +
-                    " is missing role " +
-                    (await bridge.DEFAULT_ADMIN_ROLE()).toLocaleLowerCase()
-            );
-        });
-
-        it("Should revert if length of accounts and allocations are equal", async () => {
-            const whitelist = [user, user2];
-            const allocations = [addDec(0.1), addDec(0.2), addDec(1)];
-
-            await expect(bridge.setAllocations(whitelist, allocations)).to.be.revertedWithCustomError(
-                bridge,
-                "LengthMismatch"
-            );
+            expect(await bridge.getConvertedAmount(8227821n)).to.eq(1028477n);
         });
     });
 });
