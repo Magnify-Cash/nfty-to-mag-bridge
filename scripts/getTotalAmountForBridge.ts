@@ -11,13 +11,13 @@ export function getTotalAmountForBridge() {
         totalHoldings += ethers.toBigInt(user.balance);
     }
 
-    for (const user of holdersBsc) {
-        totalHoldings += ethers.toBigInt(user.balance);
-    }
+    // for (const user of holdersBsc) {
+    //     totalHoldings += ethers.toBigInt(user.balance);
+    // }
 
-    for (const user of holdersPolygon) {
-        totalHoldings += ethers.toBigInt(user.balance);
-    }
+    // for (const user of holdersPolygon) {
+    //     totalHoldings += ethers.toBigInt(user.balance);
+    // }
 
     const amountForBridge = totalHoldings / 8n;
 
